@@ -116,6 +116,8 @@ const Form = () => {
         setLoading(false);
     };
 
+
+    //Verifying msg
     if (verifying) {
         return (
             <div className="booking-form otp-screen">

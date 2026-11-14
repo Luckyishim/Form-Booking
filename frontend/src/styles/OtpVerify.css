@@ -1,0 +1,41 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(17, 24, 39, 0.7); /* Dark semi-transparent background */
+    backdrop-filter: blur(4px); /* Blurs the form behind it */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Ensures it sits on top of everything */
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Change .otp-screen to remove the margin so it centers perfectly */
+.otp-screen {
+    text-align: center;
+    padding: 40px;
+    max-width: 450px;
+    width: 100%;
+    background: white;
+    border-radius: 28px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); /* Stronger shadow for popup */
+    font-family: 'Inter', sans-serif;
+    margin: 0; /* Remove auto margin */
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ... keep your existing .otp-input, .submit-button, and .back-button CSS here ... */
