@@ -5,10 +5,12 @@ const {
   getAllBookings,
   getBookingById,
   updateBooking,
-  deleteBooking
+  deleteBooking,
+  verifyOtp
 } = require('../controller/bookingController');
 
 router.post('/', createBooking);
+router.post('/:id/verify', verifyOtp);
 router.get('/', getAllBookings);
 router.get('/:id', getBookingById);
 router.patch('/:id', updateBooking);

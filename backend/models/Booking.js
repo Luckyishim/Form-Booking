@@ -82,6 +82,7 @@ const budgetRanges = [
     "not-sure"
 ];
 const statuses = [
+    'pending_verification',
     'pending',
     'reviewing',
     'confirmed',
@@ -114,7 +115,8 @@ const bookingSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        match:[/^9[678]\d{8}$/, 'Please enter a valid 10-digit Nepali mobile number']
     },
     email: {
         type: String,
@@ -165,7 +167,11 @@ const bookingSchema = new mongoose.Schema({
     urgent: { type: Boolean, default: false },
 
     // Internal
-    status: { type: String, enum: statuses, default: 'pending' }
+    otp: { type: String },
+    status: {
+        type: String,
+        enum: statuses, default: 'pending_verification'
+    }
 },
     { timestamps: true }
 )

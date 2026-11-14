@@ -20,10 +20,21 @@ const Form = () => {
     })
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState({ type: "", text: "" });
+    const [verifying, setVerifying] = useState(false);
+    const [bookingId, setBookingId] = useState(null)
+    const [otp, setOtp] = useState("")
 
     // Handling change
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target; // FIXED: added '='
+        let { name, value, type, checked } = e.target;
+
+        if (name === "phone") {
+            value = value.replace(/\D/g, "")
+            if (value.startsWith("977")) value = value.slice(3)
+            if (value.startsWith("0")) value = value.slice(1)
+            value = value.slice(0, 10)
+        }
+
         setFormData({
             ...formData,
             [name]: type === "checkbox" ? checked : value
@@ -45,9 +56,41 @@ const Form = () => {
             const data = await response.json()
 
             if (response.ok) {
-                setMessage({ type: "success", text: "Booking successful! ID: " + data.data._id })
+                setBookingId(data.bookingId);
+                setVerifying(true)
+                setMessage({
+                    type: "success",
+                    text: "OTP sent! Check yout phone."
+                })
+            } else {
+                setMessage({ type: "error", text: data.errors ? data.errors[0].message : data.message });
+            }
 
-                // Form resetting process
+        } catch (error) {
+            setMessage({ type: "error", text: "Server error, backend problem...", error })
+        }
+        setLoading(false)
+    }
+
+    const handleVerify = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage({ type: "", text: "" });
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/bookings/${bookingId}/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ otp })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                setMessage({ type: "success", text: `Booking Confirmed! Your Reference ID is: ${bookingId}` });
+                setVerifying(false);
+                setOtp("");
+
+                // Resetting Form
                 setFormData({
                     service: "",
                     propertyTypes: "",
@@ -63,15 +106,59 @@ const Form = () => {
                     siteVisit: false,
                     projectDescription: "",
                     urgent: false
-                })
+                });
             } else {
-                setMessage({ type: "error", text: data.errors ? data.errors[0].message : data.message });
+                setMessage({ type: "error", text: data.message });
             }
-
         } catch (error) {
-            setMessage({ type: "error", text: "Server error, backend problem...", error })
+            setMessage({ type: "error", text: "Server error during verification.", error });
         }
-        setLoading(false)
+        setLoading(false);
+    };
+
+    if (verifying) {
+        return (
+            <div className="booking-form otp-screen">
+                <h2>Verify Your Number</h2>
+                <p>
+                    Enter the 6-digit code sent to <strong>{formData.phone}</strong>
+                </p>
+                {message.text && (
+                    <div style={{
+                        padding: "12px",
+                        marginBottom: "20px",
+                        borderRadius: "8px",
+                        background: message.type === "success" ? "#e8f5e9" : "#ffebee",
+                        color: message.type === "success" ? "#2e7d32" : "#c62828"
+                    }}>
+                        {message.text}
+                    </div>
+                )}
+
+                <form onSubmit={handleVerify}>
+                    <input
+                        type="text"
+                        className="otp-input"
+                        placeholder="000000"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        maxLength={6}
+                        required
+                    />
+                    <button type="submit" className="submit-button" disabled={loading}>
+                        {loading ? "Verifying..." : "Verify & Confirm Booking →"}
+                    </button>
+                </form>
+
+                <button
+                type="button"
+                onClick={()=> setVerifying(false)}
+                className="back-button"
+                >
+                    Go back and edit form
+                </button>
+            </div>
+        )
     }
 
     return (
@@ -102,7 +189,7 @@ const Form = () => {
                 <div className="form-grid">
                     <div className="form-group">
                         <label>Service *</label>
-                        <select name="service" value={formData.service} onChange={handleChange}>
+                        <select name="service" value={formData.service} onChange={handleChange} required>
                             <option value="" disabled>Select a service</option>
                             <option value="land-survey">Land Survey &amp; Site Inspection</option>
                             <option value="soil-testing">Soil Testing</option>
@@ -151,7 +238,7 @@ const Form = () => {
 
                     <div className="form-group">
                         <label>Property Type *</label>
-                        <select name="propertyTypes" value={formData.propertyTypes} onChange={handleChange}>
+                        <select name="propertyTypes" value={formData.propertyTypes} onChange={handleChange} required>
                             <option value="" disabled>Select property type</option>
                             <option value="House">House</option>
                             <option value="Apartment">Apartment</option>
@@ -177,22 +264,31 @@ const Form = () => {
                 <div className="form-grid">
                     <div className="form-group">
                         <label>Full Name *</label>
-                        <input type="text" name="fullName" placeholder="Enter your full name" value={formData.fullName} onChange={handleChange} />
+                        <input type="text" name="fullName" placeholder="Enter your full name" value={formData.fullName} onChange={handleChange} required />
                     </div>
 
                     <div className="form-group">
                         <label>Phone Number *</label>
-                        <input type="tel" name="phone" placeholder="98XXXXXXXX" value={formData.phone} onChange={handleChange} />
+                        <input
+                            type="tel"
+                            name="phone"
+                            placeholder="98XXXXXXXX"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            required
+                            pattern="9[678]\d{8}"
+                            title="Please enter a valid 10-digit Nepalu Number"
+                        />
                     </div>
 
                     <div className="form-group">
                         <label>Email Address (Optional)</label>
-                        <input type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} />
+                        <input type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
                     </div>
 
                     <div className="form-group">
                         <label>Province *</label>
-                        <select name="provinces" value={formData.provinces} onChange={handleChange}>
+                        <select name="provinces" value={formData.provinces} onChange={handleChange} required>
                             <option value="" disabled>Select province</option>
                             <option value="Koshi Province">Koshi Province</option>
                             <option value="Madhesh Province">Madhesh Province</option>
@@ -206,12 +302,12 @@ const Form = () => {
 
                     <div className="form-group">
                         <label>District / City *</label>
-                        <input type="text" name="districtCity" placeholder="e.g. Kathmandu" value={formData.districtCity} onChange={handleChange} />
+                        <input type="text" name="districtCity" placeholder="e.g. Kathmandu" value={formData.districtCity} onChange={handleChange} required />
                     </div>
 
                     <div className="form-group">
                         <label>Full Service Address *</label>
-                        <input type="text" name="serviceAddress" placeholder="Street, area, landmark..." value={formData.serviceAddress} onChange={handleChange} />
+                        <input type="text" name="serviceAddress" placeholder="Street, area, landmark..." value={formData.serviceAddress} onChange={handleChange} required />
                     </div>
                 </div>
             </section>
@@ -229,12 +325,12 @@ const Form = () => {
                 <div className="form-grid">
                     <div className="form-group">
                         <label>Preferred Date *</label>
-                        <input type="date" name="preferredDate" value={formData.preferredDate} onChange={handleChange} />
+                        <input type="date" name="preferredDate" value={formData.preferredDate} onChange={handleChange} required />
                     </div>
 
                     <div className="form-group">
                         <label>Preferred Time *</label>
-                        <select name="preferredTime" value={formData.preferredTime} onChange={handleChange}>
+                        <select name="preferredTime" value={formData.preferredTime} onChange={handleChange} required>
                             <option value="" disabled>Select preferred time</option>
                             <option value="Morning (8am – 12pm)">Morning (8am – 12pm)</option>
                             <option value="Afternoon (12pm – 4pm)">Afternoon (12pm – 4pm)</option>
@@ -244,7 +340,7 @@ const Form = () => {
 
                     <div className="form-group">
                         <label>Estimated Budget *</label>
-                        <select name="estimatedBudget" value={formData.estimatedBudget} onChange={handleChange}>
+                        <select name="estimatedBudget" value={formData.estimatedBudget} onChange={handleChange} required>
                             <option value="" disabled>Select budget range</option>
                             <option value="below-50k">Below NPR 50,000</option>
                             <option value="50k-1l">NPR 50,000 - 1 Lakh</option>
@@ -289,6 +385,7 @@ const Form = () => {
                         maxLength={1500}
                         rows="6"
                         placeholder="Describe your project, requirements, approximate size, construction stage, design requirements, or anything else our team should know..."
+
                     />
                     <div className="textarea-info">
                         <span>Minimum 15 characters</span>
