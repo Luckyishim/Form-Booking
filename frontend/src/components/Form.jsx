@@ -1,176 +1,77 @@
-import { useState } from "react"
-import "../styles/Form.css"
+import { useState } from "react";
+import OtpVerify from "./OtpVerify";
+import "../styles/Form.css";
 
 const Form = () => {
     const [formData, setFormData] = useState({
-        service: "",
-        propertyTypes: "",
-        fullName: "",
-        phone: "",
-        email: "",
-        provinces: "",
-        districtCity: "",
-        serviceAddress: "",
-        preferredDate: "",
-        preferredTime: "",
-        estimatedBudget: "",
-        siteVisit: false,
-        projectDescription: "",
-        urgent: false
-    })
-    const [loading, setLoading] = useState(false)
-    const [message, setMessage] = useState({ type: "", text: "" });
-    const [verifying, setVerifying] = useState(false);
-    const [bookingId, setBookingId] = useState(null)
-    const [otp, setOtp] = useState("")
+        service: "", propertyTypes: "", fullName: "", phone: "", email: "",
+        provinces: "", districtCity: "", serviceAddress: "", preferredDate: "",
+        preferredTime: "", estimatedBudget: "", siteVisit: false,
+        projectDescription: "", urgent: false
+    });
 
-    // Handling change
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState({ type: "", text: "" });
+    
+    const [verifying, setVerifying] = useState(false);
+    const [bookingId, setBookingId] = useState(null);
+
     const handleChange = (e) => {
         let { name, value, type, checked } = e.target;
-
         if (name === "phone") {
-            value = value.replace(/\D/g, "")
-            if (value.startsWith("977")) value = value.slice(3)
-            if (value.startsWith("0")) value = value.slice(1)
-            value = value.slice(0, 10)
+            value = value.replace(/\D/g, "");
+            if (value.startsWith("977")) value = value.slice(3);
+            if (value.startsWith("0")) value = value.slice(1);
+            value = value.slice(0, 10);
         }
-
         setFormData({
             ...formData,
             [name]: type === "checkbox" ? checked : value
-        })
-    }
+        });
+        if (message.text) setMessage({ type: "", text: "" });
+    };
 
-    // Handling InputSubit
     const handleSubmit = async (e) => {
-        e.preventDefault()
-        setLoading(true)
-        setMessage({ type: "", text: "" })
+        e.preventDefault();
+        setLoading(true);
+        setMessage({ type: "", text: "" });
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/bookings`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
-            })
-            const data = await response.json()
-
-            if (response.ok) {
-                setBookingId(data.bookingId);
-                setVerifying(true)
-                setMessage({
-                    type: "success",
-                    text: "OTP sent! Check yout phone."
-                })
-            } else {
-                setMessage({ type: "error", text: data.errors ? data.errors[0].message : data.message });
-            }
-
-        } catch (error) {
-            setMessage({ type: "error", text: "Server error, backend problem...", error })
-        }
-        setLoading(false)
-    }
-
-    const handleVerify = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage({ type: "", text: "" });
-
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/bookings/${bookingId}/verify`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ otp })
             });
             const data = await response.json();
 
             if (response.ok) {
-                setMessage({ type: "success", text: `Booking Confirmed! Your Reference ID is: ${bookingId}` });
-                setVerifying(false);
-                setOtp("");
-
-                // Resetting Form
-                setFormData({
-                    service: "",
-                    propertyTypes: "",
-                    fullName: "",
-                    phone: "",
-                    email: "",
-                    provinces: "",
-                    districtCity: "",
-                    serviceAddress: "",
-                    preferredDate: "",
-                    preferredTime: "",
-                    estimatedBudget: "",
-                    siteVisit: false,
-                    projectDescription: "",
-                    urgent: false
-                });
+                setBookingId(data.bookingId);
+                setVerifying(true);
             } else {
-                setMessage({ type: "error", text: data.message });
+                setMessage({ type: "error", text: data.errors ? data.errors[0].message : data.message });
             }
         } catch (error) {
-            setMessage({ type: "error", text: "Server error during verification.", error });
+            setMessage({ type: "error", text: "Server error, backend problem...", error });
         }
         setLoading(false);
     };
 
-
-    //Verifying msg
-    if (verifying) {
-        return (
-            <div className="booking-form otp-screen">
-                <h2>Verify Your Number</h2>
-                <p>
-                    Enter the 6-digit code sent to <strong>{formData.phone}</strong>
-                </p>
-                {message.text && (
-                    <div style={{
-                        padding: "12px",
-                        marginBottom: "20px",
-                        borderRadius: "8px",
-                        background: message.type === "success" ? "#e8f5e9" : "#ffebee",
-                        color: message.type === "success" ? "#2e7d32" : "#c62828"
-                    }}>
-                        {message.text}
-                    </div>
-                )}
-
-                <form onSubmit={handleVerify}>
-                    <input
-                        type="text"
-                        className="otp-input"
-                        placeholder="000000"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        maxLength={6}
-                        required
-                    />
-                    <button type="submit" className="submit-button" disabled={loading}>
-                        {loading ? "Verifying..." : "Verify & Confirm Booking →"}
-                    </button>
-                </form>
-
-                <button
-                type="button"
-                onClick={()=> setVerifying(false)}
-                className="back-button"
-                >
-                    Go back and edit form
-                </button>
-            </div>
-        )
-    }
+    const handleVerifySuccess = (confirmedId) => {
+        setMessage({ type: "success", text: `Booking Confirmed! Your Reference ID is: ${confirmedId}` });
+        setVerifying(false);
+        setFormData({
+            service: "", propertyTypes: "", fullName: "", phone: "", email: "",
+            provinces: "", districtCity: "", serviceAddress: "", preferredDate: "",
+            preferredTime: "", estimatedBudget: "", siteVisit: false,
+            projectDescription: "", urgent: false
+        });
+    };
 
     return (
         <form className="booking-form" onSubmit={handleSubmit}>
-
             {message.text && (
                 <div style={{
-                    padding: "12px",
-                    marginBottom: "20px",
-                    borderRadius: "8px",
+                    padding: "12px", marginBottom: "20px", borderRadius: "8px",
                     background: message.type === "success" ? "#e8f5e9" : "#ffebee",
                     color: message.type === "success" ? "#2e7d32" : "#c62828"
                 }}>
@@ -253,7 +154,7 @@ const Form = () => {
                 </div>
             </section>
 
-            {/* Contact info */}
+            {/* Contact Information */}
             <section>
                 <div className="section-heading">
                     <span className="step-number">2</span>
@@ -266,7 +167,7 @@ const Form = () => {
                 <div className="form-grid">
                     <div className="form-group">
                         <label>Full Name *</label>
-                        <input type="text" name="fullName" placeholder="Enter your full name" value={formData.fullName} onChange={handleChange} required />
+                        <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Enter your full name" required />
                     </div>
 
                     <div className="form-group">
@@ -279,13 +180,13 @@ const Form = () => {
                             onChange={handleChange}
                             required
                             pattern="9[678]\d{8}"
-                            title="Please enter a valid 10-digit Nepalu Number"
+                            title="Please enter a valid 10-digit Nepal mobile number"
                         />
                     </div>
 
                     <div className="form-group">
                         <label>Email Address (Optional)</label>
-                        <input type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="you@example.com" />
                     </div>
 
                     <div className="form-group">
@@ -304,17 +205,17 @@ const Form = () => {
 
                     <div className="form-group">
                         <label>District / City *</label>
-                        <input type="text" name="districtCity" placeholder="e.g. Kathmandu" value={formData.districtCity} onChange={handleChange} required />
+                        <input type="text" name="districtCity" value={formData.districtCity} onChange={handleChange} placeholder="e.g. Kathmandu" required />
                     </div>
 
                     <div className="form-group">
                         <label>Full Service Address *</label>
-                        <input type="text" name="serviceAddress" placeholder="Street, area, landmark..." value={formData.serviceAddress} onChange={handleChange} required />
+                        <input type="text" name="serviceAddress" value={formData.serviceAddress} onChange={handleChange} placeholder="Street, area, landmark..." required />
                     </div>
                 </div>
             </section>
 
-            {/* Project details */}
+            {/* Project Details */}
             <section>
                 <div className="section-heading">
                     <span className="step-number">3</span>
@@ -358,18 +259,10 @@ const Form = () => {
                     <div className="form-group">
                         <label>Do you need a site visit?</label>
                         <div className="button-group">
-                            <button
-                                type="button"
-                                className={formData.siteVisit === true ? "selected" : ""}
-                                onClick={() => setFormData({ ...formData, siteVisit: true })}
-                            >
+                            <button type="button" className={formData.siteVisit === true ? "selected" : ""} onClick={() => setFormData({ ...formData, siteVisit: true })}>
                                 Yes
                             </button>
-                            <button
-                                type="button"
-                                className={formData.siteVisit === false ? "selected" : ""}
-                                onClick={() => setFormData({ ...formData, siteVisit: false })}
-                            >
+                            <button type="button" className={formData.siteVisit === false ? "selected" : ""} onClick={() => setFormData({ ...formData, siteVisit: false })}>
                                 No
                             </button>
                         </div>
@@ -387,7 +280,6 @@ const Form = () => {
                         maxLength={1500}
                         rows="6"
                         placeholder="Describe your project, requirements, approximate size, construction stage, design requirements, or anything else our team should know..."
-
                     />
                     <div className="textarea-info">
                         <span>Minimum 15 characters</span>
@@ -399,9 +291,7 @@ const Form = () => {
                     <input type="checkbox" name="urgent" checked={formData.urgent} onChange={handleChange} />
                     <span>
                         <strong>I need this service urgently</strong>
-                        <small>
-                            Let our team know if you need faster assistance than your selected schedule.
-                        </small>
+                        <small>Let our team know if you need faster assistance than your selected schedule.</small>
                     </span>
                 </label>
             </section>
@@ -411,11 +301,21 @@ const Form = () => {
             </button>
 
             <p className="form-footer">
-                Our team will review your request and contact you to confirm
-                the service details and schedule.
+                Our team will review your request and contact you to confirm the service details and schedule.
             </p>
 
+            {/* OVERLAY COMPONENT - Placed here so it covers the screen */}
+            {verifying && (
+                <OtpVerify 
+                    bookingId={bookingId} 
+                    phone={formData.phone} 
+                    onSuccess={handleVerifySuccess} 
+                    onBack={() => setVerifying(false)} 
+                />
+            )}
+
         </form>
-    )
-}
-export default Form
+    );
+};
+
+export default Form;

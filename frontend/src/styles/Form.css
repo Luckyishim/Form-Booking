@@ -11,6 +11,7 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
   font-family: 'Inter', sans-serif;
   box-sizing: border-box;
+  position: relative; /* Added for proper stacking context */
 }
 
 .booking-form * {
@@ -192,67 +193,18 @@
   background: #0a3532;
 }
 
-.form-footer {
-  margin: 14px 0 0;
-  text-align: center;
-  font-size: 12px;
-  color: #6b7280;
-  line-height: 1.6;
-}
-
 .submit-button:disabled {
   background: #6b7280;
   cursor: not-allowed;
   opacity: 0.7;
 }
 
-/* OTP Verifictaion styles */
-.otp-screen {
+.form-footer {
+  margin: 14px 0 0;
   text-align: center;
-  padding: 60px 40px;
-  max-width: 500px;
-  margin: 40px auto;
-}
-
-.otp-screen h2 {
-  margin-bottom: 10px;
-}
-
-.otp-screen p {
+  font-size: 12px;
   color: #6b7280;
-  margin-bottom: 30px;
-}
-
-.otp-input {
-  font-size: 32px;
-  text-align: center;
-  letter-spacing: 10px;
-  height: 70px;
-  width: 100%;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  margin-bottom: 20px;
-  outline: none;
-  transition: 0.2s;
-}
-
-.otp-input:focus {
-  border-color: #0e4541;
-  box-shadow: 0 0 0 3px rgba(14, 69, 65, 0.12);
-}
-
-.back-button {
-  margin-top: 20px;
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  text-decoration: underline;
-  font-family: inherit;
-}
-
-.back-button:hover {
-  color: #111827;
+  line-height: 1.6;
 }
 
 @media (max-width: 600px) {
